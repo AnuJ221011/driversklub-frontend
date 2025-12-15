@@ -25,7 +25,6 @@ export default function LoginPage() {
   const [step, setStep] = useState('phone'); // 'phone' | 'otp'
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
-  const [requestId, setRequestId] = useState(null);
 
   const [sending, setSending] = useState(false);
   const [verifying, setVerifying] = useState(false);
@@ -33,7 +32,7 @@ export default function LoginPage() {
   const otpRef = useRef(null);
 
   const phoneOk = useMemo(() => isLikelyPhone(phone), [phone]);
-  const otpOk = useMemo(() => /^\d{4,8}$/.test(otp), [otp]);
+  const otpOk = useMemo(() => /^\d{6}$/.test(otp), [otp]);
 
   async function onSendOtp() {
     if (!phoneOk) {
@@ -44,15 +43,6 @@ export default function LoginPage() {
     setSending(true);
     try {
       const res = await sendOtpWhatsApp({ phone: normalizePhone(phone) });
-
-      // Try to capture a request id if backend returns one
-      const rid =
-        res?.requestId ||
-        res?.data?.requestId ||
-        res?.data?.otpRequestId ||
-        res?.otpRequestId ||
-        null;
-      setRequestId(rid);
 
       toast.success(res?.message || 'OTP sent via WhatsApp');
       setStep('otp');
@@ -81,7 +71,6 @@ export default function LoginPage() {
       const res = await verifyOtp({
         phone: normalizePhone(phone),
         otp,
-        requestId,
       });
 
       const token =
@@ -150,7 +139,7 @@ export default function LoginPage() {
                   placeholder="Enter OTP"
                   inputMode="numeric"
                   autoComplete="one-time-code"
-                  maxLength={8}
+                  maxLength={6}
                   disabled={verifying}
                   ref={otpRef}
                 />
@@ -176,7 +165,6 @@ export default function LoginPage() {
                     onClick={() => {
                       setStep('phone');
                       setOtp('');
-                      setRequestId(null);
                     }}
                     disabled={sending || verifying}
                   >
